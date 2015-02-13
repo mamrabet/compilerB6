@@ -856,7 +856,7 @@ GotoInstruction::connectToLabel(LabelInstruction& instruction)
 
 inline void
 GotoInstruction::addDominationFrontier(GotoInstruction& gotoInstruction)
-{ m_dominationFrontier.push_back(&gotoInstruction); }
+{ m_domination Frontier.push_back(&gotoInstruction); }
 
 
 class ReturnInstruction : public VirtualInstruction {
