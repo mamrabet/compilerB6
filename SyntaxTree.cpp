@@ -155,19 +155,19 @@ Function::setDominationFrontier() {
                while (notDominator->type() != VirtualInstruction::TLabel
                        && notDominator->getSPreviousInstruction()
                   && notDominator->getSPreviousInstruction()->type() != VirtualInstruction::TIf)
-                 notDominator = notDominator->getSPreviousInstruction(); 
+                 notDominator =notDominator->getSPreviousInstruction(); 
        if (notDominator->getSPreviousInstruction()
        && (notDominator->getSPreviousInstruction()->type() == VirtualInstruction::TIf)) {
        assert(dynamic_cast<const GotoInstruction*>(notDominator));
-        ((GotoInstruction&) *notDominator).addDominationFrontier(label.m_goto);
-           notDominator = ...;
-
+        ((GotoInstruction&) *notDominator).addDominationFrontier(*label.m_goto);
+	notDominator = notDominator->getSPreviousInstruction();
+        
       };
    if (notDominator->type() == VirtualInstruction::TLabel) { 
         assert(dynamic_cast<const LabelInstruction*>(notDominator));
         LabelInstruction& labelInstruction = (LabelInstruction&) *notDominator;
-        labelInstruction.addDominationFrontier(label.m_goto);
-     notDominator = ...;
+        labelInstruction.addDominationFrontier(*label.m_goto);
+	notDominator =dynamic_cast<const LabelInstruction*> (notDominator)->m_dominator;
          };
        };
      };
@@ -176,13 +176,17 @@ if (label.getSPreviousInstruction() != NULL) {
        assert(dynamic_cast<const GotoInstruction*>(notDominator));
       GotoInstruction* origin = (GotoInstruction*) notDominator;
   while (label.m_dominator != notDominator) {
-        while (...)
-        notDominator = ...;
-       if (notDominator->getSPreviousInstruction() && notDominator->getSPreviousInstruction()->type() == ...) {
-          ...
+        while (notDominator->type() != VirtualInstruction::TLabel
+                       && notDominator->getSPreviousInstruction()
+                  && notDominator->getSPreviousInstruction()->type() != VirtualInstruction::TIf)
+        notDominator =notDominator->getSPreviousInstruction();
+	if (notDominator->getSPreviousInstruction() && notDominator->getSPreviousInstruction()->type() ==VirtualInstruction::TIf) {
+         ((GotoInstruction&) *notDominator).addDominationFrontier(*origin);
+          notDominator= notDominator->getSPreviousInstruction();
            };
-     if (notDominator->type() == ...) {
-    ...
+	if (notDominator->type() == VirtualInstruction::TLabel) {
+  ((GotoInstruction&) *notDominator).addDominationFrontier(*origin);
+  notDominator=dynamic_cast<const LabelInstruction*>(notDominator)->m_dominator;
      };
    };
  };
@@ -213,6 +217,12 @@ for (std::set<Function>::const_iterator functionIter = m_functions.begin();
 
 }
 
+void
+Program::computeDominationFrontiers() {
+for (std::set<Function>::iterator functionIter = m_functions.begin();
+functionIter != m_functions.end(); ++functionIter)
+const_cast<Function&>(*functionIter).setDominationFrontier();
+}
 extern int yydebug;
 
 int main( int argc, char** argv ) {
@@ -232,6 +242,9 @@ int main( int argc, char** argv ) {
    program.computeDominators();
    program.printWithWorkList(std::cout);
    std::cout << std::endl;
+   program.computeDominationFrontiers();
+program.printWithWorkList(std::cout);
+std::cout << std::endl;
 
    return 0;
 }

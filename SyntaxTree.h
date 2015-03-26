@@ -847,8 +847,8 @@ virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reu
       DominationFrontier& getDominationFrontier() { return m_dominationFrontier; }
        const DominationFrontier& getDominationFrontier() const { return m_dominationFrontier;}
      friend class Function;
+      };
 
-};
 
 inline void
 GotoInstruction::connectToLabel(LabelInstruction& instruction)
@@ -856,7 +856,7 @@ GotoInstruction::connectToLabel(LabelInstruction& instruction)
 
 inline void
 GotoInstruction::addDominationFrontier(GotoInstruction& gotoInstruction)
-{ m_domination Frontier.push_back(&gotoInstruction); }
+{ m_dominationFrontier.push_back(&gotoInstruction); }
 
 
 class ReturnInstruction : public VirtualInstruction {
@@ -998,6 +998,7 @@ class Function {
          m_instructions.push_back(newInstruction);
          previous.connectTo(*newInstruction);
       }
+   void setDominationFrontier();
    void addFirstInstruction(VirtualInstruction* newInstruction)
       {  assert(m_instructions.empty());
          newInstruction->setRegistrationIndex(0);
@@ -1068,6 +1069,7 @@ class Program {
       }
    void printWithWorkList(std::ostream& out) const;
    void computeDominators();
+   void computeDominationFrontiers();
    class ParseContext {
      private:
       friend int getTokenIdentifier(const char* szText);
