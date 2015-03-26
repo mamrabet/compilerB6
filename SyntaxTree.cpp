@@ -76,6 +76,47 @@ WorkList::addNewSorted(VirtualTask* virtualTask) {
 }
 
 void
+LocalVariableExpression::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
+int type = vtTask.getType();
+  if (type == TTPhiInsertion) {
+     assert(dynamic_cast<const PhiInsertionTask*>(&vtTask));
+     PhiInsertionTask& task = (PhiInsertionTask&) vtTask;
+    if (task.m_isLValue) {
+     if (task.m_modified.find(this) == task.m_modified.end())
+       task.m_modified.insert(this);
+      if (task.m_dominationFrontier) {
+      for (std::vector<GotoInstruction*>::const_iterator labelIter = task.m_dominationFrontier->begin();
+      labelIter != task.m_dominationFrontier->end(); ++labelIter) {
+      LabelInstruction& label = (LabelInstruction&) *((*labelIter)->getSNextInstruction());
+      if (!label.mark)
+        label.mark = new PhiInsertionTask::LabelResult();
+     PhiInsertionTask::LabelResult& result = *((PhiInsertionTask::LabelResult*) label.mark);
+     if (result.map().find(this) == result.map().end()) {
+     std::pair<VirtualExpression*, std::pair<GotoInstruction*, GotoInstruction*> > insert;
+     insert.first = this;
+insert.second.first = NULL;
+insert.second.second = NULL;
+result.map().insert(insert);
+};
+};
+};
+};
+};
+}
+
+void
+AssignExpression::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
+int type = vtTask.getType();
+if (type == TTPhiInsertion && m_lvalue.get()) {
+assert(dynamic_cast<const PhiInsertionTask*>(&vtTask));
+PhiInsertionTask& task = (PhiInsertionTask&) vtTask;
+ task.m_isLValue = true;
+m_lvalue->handle(task, continuations, reuse);
+ task.m_isLValue = false;
+};
+}
+
+void
 FunctionCallExpression::print(std::ostream& out) const {
    if (m_function)
       out << m_function->getName() << '(';
@@ -97,6 +138,95 @@ VirtualInstruction::handle(VirtualTask& task, WorkList& continuations, Reusabili
    continuations.markInstructionWith(task.getInstruction(), task);
    propagateOnUnmarked(task, continuations, reuse);
 }
+
+void
+ExpressionInstruction::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
+int type = vtTask.getType();
+if (type == TTPhiInsertion) {
+if (m_expression.get())
+m_expression->handle(vtTask, continuations, reuse);
+};
+VirtualInstruction::handle(vtTask, continuations, reuse);
+}
+
+void
+GotoInstruction::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
+int type = vtTask.getType();
+if ((type == TTPhiInsertion)
+&& ((m_context == CAfterIfThen) || (m_context == CAfterIfElse))) {
+assert(dynamic_cast<const PhiInsertionTask*>(&vtTask));
+PhiInsertionTask& task = (PhiInsertionTask&) vtTask;
+ task.m_dominationFrontier = &(this->getDominationFrontier());
+if (getSPreviousInstruction() && getSPreviousInstruction()->type() == TIf) {
+for (std::vector<GotoInstruction*>::const_iterator labelIter = task.m_dominationFrontier->begin();
+labelIter != task.m_dominationFrontier->end(); ++labelIter) {
+LabelInstruction& label = (LabelInstruction&) *(*labelIter)->getSNextInstruction();
+if (!label.mark)
+label.mark = new PhiInsertionTask::LabelResult();
+((PhiInsertionTask::LabelResult*) label.mark)->variablesToAdd().insert( this->getDominationFrontier().begin(), this->getDominationFrontier().end());
+};
+};
+};
+VirtualInstruction::handle(vtTask, continuations, reuse);
+}
+
+
+bool
+GotoInstruction::propagateOnUnmarked(VirtualTask& vtTask, WorkList& continuations,
+Reusability& reuse) const {
+if (m_context >= CLoop && (vtTask.getType() == TTPhiInsertion)) {
+if (getSNextInstruction() && getSNextInstruction()->type() == TLabel) {
+assert(dynamic_cast<const LabelInstruction*>(getSNextInstruction()));
+LabelInstruction& label = (LabelInstruction&) *getSNextInstruction();
+assert(dynamic_cast<const PhiInsertionTask*>(&vtTask));
+PhiInsertionTask& task = (PhiInsertionTask&) vtTask;
+if (!label.mark)
+label.mark = new PhiInsertionTask::LabelResult();
+bool hasFoundFrontier = false;
+if (task.m_dominationFrontier) {
+for (std::vector<GotoInstruction*>::const_iterator labelIter = task.m_dominationFrontier->begin();
+labelIter != task.m_dominationFrontier->end(); ++labelIter) {
+if ((*labelIter)->getSNextInstruction() == &label) { 
+PhiInsertionTask::LabelResult& result = *((PhiInsertionTask::LabelResult*) label.mark);
+LocalVariableExpression afterLast(std::string(), task.m_scope.count(), task.m_scope);
+for (PhiInsertionTask::ModifiedVariables::iterator iter = task.m_modified.begin();
+iter != task.m_modified.end(); ++iter) {
+if (PhiInsertionTask::IsBefore().operator()(*iter, &afterLast)) { 
+PhiInsertionTask::LabelResult::iterator found = result.map().find(*iter);
+if (found != result.map().end()) { 
+if (found->second.first == NULL)
+  found->second.first = (GotoInstruction*) (this);
+else if (found->second.second == NULL)
+  found->second.second =(GotoInstruction*) (this) ;
+else { assert(false); }
+};
+};
+};
+hasFoundFrontier = true;
+};
+};
+};
+
+if (!((PhiInsertionTask::LabelResult*) label.mark)->hasMark()) {
+task.clearInstruction();
+task.setInstruction(*getSNextInstruction());
+reuse.setReuse();
+};
+if (hasFoundFrontier)
+  task.m_modified = ((PhiInsertionTask::LabelResult*) label.mark)->variablesToAdd();
+else if (label.mark) {
+PhiInsertionTask::LabelResult& result = *(PhiInsertionTask::LabelResult*) label.mark;
+ task.m_modified.insert(result.map().begin(), result.map().end());
+};
+return true;
+};
+}
+if ((m_context >= CLoop) || !m_context)
+reuse.setSorted();
+return VirtualInstruction::propagateOnUnmarked(vtTask, continuations, reuse);
+}
+
+
 
 void
 LabelInstruction::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
@@ -171,25 +301,32 @@ Function::setDominationFrontier() {
          };
        };
      };
-if (label.getSPreviousInstruction() != NULL) { 
-      VirtualInstruction* notDominator = label.getSPreviousInstruction();
-       assert(dynamic_cast<const GotoInstruction*>(notDominator));
-      GotoInstruction* origin = (GotoInstruction*) notDominator;
-  while (label.m_dominator != notDominator) {
-        while (notDominator->type() != VirtualInstruction::TLabel
-                       && notDominator->getSPreviousInstruction()
-                 )
-        notDominator =notDominator->getSPreviousInstruction();
-	if (notDominator->getSPreviousInstruction() && notDominator->getSPreviousInstruction()->type() ==VirtualInstruction::TIf) {
-         ((GotoInstruction&) *notDominator).addDominationFrontier(*origin);
-          notDominator= notDominator->getSPreviousInstruction();
-           };
-	if (notDominator->type() == VirtualInstruction::TLabel) {
-  ((GotoInstruction&) *notDominator).addDominationFrontier(*origin);
-  notDominator=dynamic_cast<const LabelInstruction*>(notDominator)->m_dominator;
+     if (label.getSPreviousInstruction() != NULL) { 
+	VirtualInstruction* notDominator = label.getSPreviousInstruction();
+	assert(dynamic_cast<const GotoInstruction*>(notDominator));
+	GotoInstruction* origin = (GotoInstruction*) notDominator;
+	while (label.m_dominator != notDominator) {
+	  while (notDominator->type() != VirtualInstruction::TLabel
+		 && notDominator->getSPreviousInstruction()
+		 && notDominator->getSPreviousInstruction()->type() != VirtualInstruction::TIf)
+	    notDominator =  notDominator->getSPreviousInstruction() ;
+	  if (notDominator->getSPreviousInstruction() && notDominator->getSPreviousInstruction()->type() ==  VirtualInstruction::TIf ) {
+	    
+	    assert(dynamic_cast<const GotoInstruction*>(notDominator));
+	    ((GotoInstruction&) *notDominator).addDominationFrontier( *origin);
+	    notDominator = notDominator->getSPreviousInstruction();
+	    
+	  };
+	  if (notDominator->type() ==  VirtualInstruction::TLabel ) {
+	    
+	    assert(dynamic_cast<const LabelInstruction*>(notDominator));
+	    LabelInstruction& labelInstruction = (LabelInstruction&) *notDominator;
+	    labelInstruction.addDominationFrontier(*origin);
+	    notDominator = labelInstruction.m_dominator ;
+	    
+	  };
+	};
      };
-   };
- };
 };
 };
 }

@@ -1,11 +1,10 @@
 CXX = g++
-CXXFLAGS = -Wall -Winline -fmessage-length=0 -ggdb -fno-inline
+CXXFLAGS = -Wall -Winline -fmessage-length=0 -ggdb -fno-inline -I /home/m/mamrabet/flex/include
 
 all : my_comp
 
-my_comp : SyntaxTree.o SimpleC_gram.o SimpleC_lex.o
-	$(CXX) -o my_comp $(CXXFLAGS) SyntaxTree.o SimpleC_gram.o SimpleC_lex.o Algorithms.o -lfl
-
+my_comp : SyntaxTree.o SimpleC_gram.o SimpleC_lex.o Algorithms.o
+	$(CXX) -o my_comp $(CXXFLAGS) SyntaxTree.o Algorithms.o SimpleC_gram.o SimpleC_lex.o /home/m/mamrabet/flex/lib/libfl.a
 SyntaxTree.o : SyntaxTree.cpp SyntaxTree.h Algorithms.h
 	$(CXX) -c -o SyntaxTree.o $(CXXFLAGS) SyntaxTree.cpp
 
