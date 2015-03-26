@@ -1072,6 +1072,8 @@ class Program {
    void printWithWorkList(std::ostream& out) const;
    void computeDominators();
    void computeDominationFrontiers();
+void insertPhiFunctions();
+
    class ParseContext {
      private:
       friend int getTokenIdentifier(const char* szText);
