@@ -178,7 +178,7 @@ if (label.getSPreviousInstruction() != NULL) {
   while (label.m_dominator != notDominator) {
         while (notDominator->type() != VirtualInstruction::TLabel
                        && notDominator->getSPreviousInstruction()
-                  && notDominator->getSPreviousInstruction()->type() != VirtualInstruction::TIf)
+                 )
         notDominator =notDominator->getSPreviousInstruction();
 	if (notDominator->getSPreviousInstruction() && notDominator->getSPreviousInstruction()->type() ==VirtualInstruction::TIf) {
          ((GotoInstruction&) *notDominator).addDominationFrontier(*origin);
