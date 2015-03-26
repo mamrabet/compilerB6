@@ -163,7 +163,7 @@ labelIter != task.m_dominationFrontier->end(); ++labelIter) {
 LabelInstruction& label = (LabelInstruction&) *(*labelIter)->getSNextInstruction();
 if (!label.mark)
 label.mark = new PhiInsertionTask::LabelResult();
-((PhiInsertionTask::LabelResult*) label.mark)->variablesToAdd().insert( this->getDominationFrontier().begin(), this->getDominationFrontier().end());
+ ((PhiInsertionTask::LabelResult*) label.mark)->variablesToAdd().insert(task.m_modified.begin(),task.m_modified.end());
 };
 };
 };
@@ -216,7 +216,7 @@ if (hasFoundFrontier)
   task.m_modified = ((PhiInsertionTask::LabelResult*) label.mark)->variablesToAdd();
 else if (label.mark) {
 PhiInsertionTask::LabelResult& result = *(PhiInsertionTask::LabelResult*) label.mark;
- task.m_modified.insert(result.map().begin(), result.map().end());
+ task.m_modified.insert(result.variablesToAdd().begin(),result.variablesToAdd().end()  );
 };
 return true;
 };
@@ -245,7 +245,12 @@ LabelInstruction::handle(VirtualTask& vtTask, WorkList& continuations, Reusabili
     task.setHeight(newDominator->getDominationHeight());
     m_dominator = newDominator;
         };
-    };
+    }
+else if (type == TTPhiInsertion) {
+assert(dynamic_cast<const PhiInsertionTask*>(&vtTask));
+((PhiInsertionTask&) vtTask).m_dominationFrontier = this.m_dominationFrontier;
+};
+
    VirtualInstruction::handle(vtTask, continuations, reuse);
 }
 

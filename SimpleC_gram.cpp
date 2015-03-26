@@ -1,4 +1,4 @@
-/* A Bison parser, made by GNU Bison 3.0.2.  */
+/* A Bison parser, made by GNU Bison 3.0.  */
 
 /* Bison implementation for Yacc-like parsers in C
 
@@ -44,7 +44,7 @@
 #define YYBISON 1
 
 /* Bison version.  */
-#define YYBISON_VERSION "3.0.2"
+#define YYBISON_VERSION "3.0"
 
 /* Skeleton name.  */
 #define YYSKELETON_NAME "yacc.c"
@@ -80,11 +80,11 @@ enum TokenType
 
 #line 82 "SimpleC_gram.cpp" /* yacc.c:339  */
 
-# ifndef YY_NULLPTR
+# ifndef YY_NULL
 #  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULLPTR nullptr
+#   define YY_NULL nullptr
 #  else
-#   define YY_NULLPTR 0
+#   define YY_NULL 0
 #  endif
 # endif
 
@@ -227,30 +227,11 @@ typedef short int yytype_int16;
 # endif
 #endif
 
-#ifndef YY_ATTRIBUTE
-# if (defined __GNUC__                                               \
-      && (2 < __GNUC__ || (__GNUC__ == 2 && 96 <= __GNUC_MINOR__)))  \
-     || defined __SUNPRO_C && 0x5110 <= __SUNPRO_C
-#  define YY_ATTRIBUTE(Spec) __attribute__(Spec)
-# else
-#  define YY_ATTRIBUTE(Spec) /* empty */
-# endif
-#endif
-
-#ifndef YY_ATTRIBUTE_PURE
-# define YY_ATTRIBUTE_PURE   YY_ATTRIBUTE ((__pure__))
-#endif
-
-#ifndef YY_ATTRIBUTE_UNUSED
-# define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
-#endif
-
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
-# else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
+#ifndef __attribute__
+/* This feature is available in gcc versions 2.5 and later.  */
+# if (! defined __GNUC__ || __GNUC__ < 2 \
+      || (__GNUC__ == 2 && __GNUC_MINOR__ < 5))
+#  define __attribute__(Spec) /* empty */
 # endif
 #endif
 
@@ -497,7 +478,7 @@ static const char *const yytname[] =
   "$@5", "$@6", "end_if_statement", "$@7", "expression",
   "relational_expression", "additive_expression",
   "multiplicative_expression", "pm_expression", "postfix_expression",
-  "primary_expression", "expression_list", YY_NULLPTR
+  "primary_expression", "expression_list", YY_NULL
 };
 #endif
 
@@ -937,11 +918,11 @@ static int
 yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                 yytype_int16 *yyssp, int yytoken)
 {
-  YYSIZE_T yysize0 = yytnamerr (YY_NULLPTR, yytname[yytoken]);
+  YYSIZE_T yysize0 = yytnamerr (YY_NULL, yytname[yytoken]);
   YYSIZE_T yysize = yysize0;
   enum { YYERROR_VERBOSE_ARGS_MAXIMUM = 5 };
   /* Internationalized format string. */
-  const char *yyformat = YY_NULLPTR;
+  const char *yyformat = YY_NULL;
   /* Arguments of yyformat. */
   char const *yyarg[YYERROR_VERBOSE_ARGS_MAXIMUM];
   /* Number of reported tokens (one for the "unexpected", one per
@@ -998,7 +979,7 @@ yysyntax_error (YYSIZE_T *yymsg_alloc, char **yymsg,
                   }
                 yyarg[yycount++] = yytname[yyx];
                 {
-                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULLPTR, yytname[yyx]);
+                  YYSIZE_T yysize1 = yysize + yytnamerr (YY_NULL, yytname[yyx]);
                   if (! (yysize <= yysize1
                          && yysize1 <= YYSTACK_ALLOC_MAXIMUM))
                     return 2;
@@ -1332,389 +1313,389 @@ yyreduce:
         case 2:
 #line 79 "SimpleC.yy" /* yacc.c:1646  */
     {}
-#line 1336 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1317 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 3:
 #line 80 "SimpleC.yy" /* yacc.c:1646  */
     {}
-#line 1342 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1323 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
 #line 83 "SimpleC.yy" /* yacc.c:1646  */
     {}
-#line 1348 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1329 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
 #line 84 "SimpleC.yy" /* yacc.c:1646  */
     {}
-#line 1354 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1335 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
 #line 87 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.addGlobalDeclarationStatement((yyvsp[-2].type), *(yyvsp[-1].identifier)); delete (yyvsp[-1].identifier); (yyvsp[-1].identifier) = NULL; }
-#line 1360 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1341 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 7:
 #line 88 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.setEmptyFunction(*(yyvsp[-2].identifier)); delete (yyvsp[-2].identifier); (yyvsp[-2].identifier) = NULL; }
-#line 1366 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1347 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 8:
 #line 89 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.pushFunction(*(yyvsp[-1].identifier)); delete (yyvsp[-1].identifier); (yyvsp[-1].identifier) = NULL; }
-#line 1372 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1353 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 9:
 #line 89 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.popFunction(); }
-#line 1378 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1359 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 10:
 #line 92 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.identifier) = (yyvsp[0].identifier); }
-#line 1384 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1365 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 11:
 #line 93 "SimpleC.yy" /* yacc.c:1646  */
     { (yyvsp[-1].type) = new PointerType((yyvsp[-1].type)); (yyvsp[0].type) = (yyvsp[-1].type); }
-#line 1390 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1371 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
 #line 93 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.identifier) = (yyvsp[0].identifier); }
-#line 1396 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1377 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
 #line 96 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.identifier) = (yyvsp[0].identifier); }
-#line 1402 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1383 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
 #line 97 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.identifier) = (yyvsp[-3].identifier); }
-#line 1408 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1389 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
 #line 98 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.identifier) = (yyvsp[-4].identifier); }
-#line 1414 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1395 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
 #line 99 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.identifier) = (yyvsp[-3].identifier); }
-#line 1420 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1401 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
 #line 100 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.identifier) = (yyvsp[-1].identifier); }
-#line 1426 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1407 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
 #line 104 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.type) = (yyvsp[(-1) - (0)].type); /* function pointer */ }
-#line 1432 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1413 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
 #line 107 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.function) = &parseContext.addFunction(*(yyvsp[0].identifier)); }
-#line 1438 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1419 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
 #line 109 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.function) = (yyvsp[(-1) - (2)].function); (yyval.function)->signature().addNewParameter(*(yyvsp[0].identifier), (yyvsp[-1].type)); delete (yyvsp[0].identifier); (yyvsp[0].identifier) = NULL; }
-#line 1444 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1425 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
 #line 110 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.function) = (yyvsp[-3].function); (yyval.function)->signature().addNewParameter(*(yyvsp[0].identifier), (yyvsp[-1].type)); delete (yyvsp[0].identifier); (yyvsp[0].identifier) = NULL;}
-#line 1450 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1431 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
 #line 113 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = (yyvsp[0].instruction); }
-#line 1456 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1437 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
 #line 114 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = (yyvsp[0].instruction); }
-#line 1462 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1443 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
 #line 117 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &parseContext.getLastInstruction(); }
-#line 1468 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1449 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
 #line 118 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &(new ExpressionInstruction())->setExpression((yyvsp[-1].expression)); parseContext.addNewInstruction((yyval.instruction)); }
-#line 1474 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1455 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
 #line 119 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &parseContext.getLastInstruction(); }
-#line 1480 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1461 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
 #line 120 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.pushBlock(); }
-#line 1486 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1467 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
 #line 120 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &parseContext.closeBlock(*(yyvsp[-1].instruction)); }
-#line 1492 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1473 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
 #line 121 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.pushIfThen((yyvsp[-1].expression)); }
-#line 1498 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1479 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
 #line 121 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = (yyvsp[0].instruction); }
-#line 1504 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1485 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
 #line 122 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.pushWhileLoop((yyvsp[-1].expression)); }
-#line 1510 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1491 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
 #line 122 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &parseContext.closeWhileLoop(*(yyvsp[0].instruction)); }
-#line 1516 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1497 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
 #line 123 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.pushDoLoop(); }
-#line 1522 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1503 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
 #line 123 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &parseContext.closeDoLoop(*(yyvsp[-5].instruction), (yyvsp[-2].expression)); }
-#line 1528 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1509 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
 #line 124 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.addDeclarationStatement((yyvsp[-2].type), *(yyvsp[-1].identifier)); (yyval.instruction) = &parseContext.getLastInstruction(); delete (yyvsp[-1].identifier); (yyvsp[-1].identifier) = NULL; }
-#line 1534 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1515 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
 #line 125 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &(new ReturnInstruction())->setResult((yyvsp[-1].expression)); parseContext.addNewReturnInstruction((ReturnInstruction*) (yyval.instruction)); }
-#line 1540 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1521 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 37:
 #line 128 "SimpleC.yy" /* yacc.c:1646  */
     { parseContext.setToIfElse(*(yyvsp[-1].instruction)); }
-#line 1546 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1527 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
 #line 128 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &parseContext.closeIfElse(*(yyvsp[-3].instruction), *(yyvsp[0].instruction)); }
-#line 1552 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1533 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
 #line 129 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.instruction) = &parseContext.closeIfThen(*(yyvsp[0].instruction)); }
-#line 1558 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1539 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
 #line 131 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new AssignExpression())->setLValue((yyvsp[-2].expression)).setRValue((yyvsp[0].expression)); }
-#line 1564 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1545 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
 #line 132 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1570 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1551 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 42:
 #line 135 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1576 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1557 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
 #line 136 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new ComparisonExpression())->setOperator(ComparisonExpression::OCompareLess).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1582 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1563 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 44:
 #line 137 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new ComparisonExpression())->setOperator(ComparisonExpression::OCompareLessOrEqual).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1588 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1569 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 45:
 #line 138 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new ComparisonExpression())->setOperator(ComparisonExpression::OCompareEqual).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1594 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1575 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 46:
 #line 139 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new ComparisonExpression())->setOperator(ComparisonExpression::OCompareGreaterOrEqual).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1600 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1581 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 47:
 #line 140 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new ComparisonExpression())->setOperator(ComparisonExpression::OCompareGreater).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1606 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1587 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 48:
 #line 143 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1612 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1593 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 49:
 #line 144 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new BinaryOperatorExpression())->setOperator(BinaryOperatorExpression::OPlus).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1618 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1599 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 50:
 #line 145 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new BinaryOperatorExpression())->setOperator(BinaryOperatorExpression::OMinus).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1624 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1605 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 51:
 #line 148 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1630 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1611 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 52:
 #line 149 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new BinaryOperatorExpression())->setOperator(BinaryOperatorExpression::OTimes).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1636 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1617 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 53:
 #line 150 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new BinaryOperatorExpression())->setOperator(BinaryOperatorExpression::ODivide).setFst((yyvsp[-2].expression)).setSnd((yyvsp[0].expression)); }
-#line 1642 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1623 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 54:
 #line 153 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1648 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1629 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 55:
 #line 154 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new DereferenceExpression())->setSubExpression((yyvsp[0].expression)); }
-#line 1654 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1635 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 56:
 #line 155 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new ReferenceExpression())->setSubExpression((yyvsp[0].expression)); }
-#line 1660 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1641 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 57:
 #line 156 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1666 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1647 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 58:
 #line 157 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = &(new UnaryOperatorExpression())->setOperator(UnaryOperatorExpression::OMinus).setSubExpression((yyvsp[0].expression)); }
-#line 1672 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1653 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 59:
 #line 160 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1678 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1659 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 60:
 #line 161 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[-3].expression); }
-#line 1684 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1665 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 61:
 #line 162 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[-2].expression); }
-#line 1690 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1671 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 62:
 #line 165 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[0].expression); }
-#line 1696 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1677 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 63:
 #line 166 "SimpleC.yy" /* yacc.c:1646  */
     { (yyval.expression) = (yyvsp[-1].expression); }
-#line 1702 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1683 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 64:
 #line 169 "SimpleC.yy" /* yacc.c:1646  */
     { assert(dynamic_cast<const FunctionCallExpression*>((yyvsp[-2].expression))); (yyval.expression) = (yyvsp[-2].expression); ((FunctionCallExpression*) (yyval.expression))->addArgument((yyvsp[0].expression)); }
-#line 1708 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1689 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
   case 65:
 #line 170 "SimpleC.yy" /* yacc.c:1646  */
     { assert(dynamic_cast<const FunctionCallExpression*>((yyvsp[(-1) - (1)].expression))); (yyval.expression) = (yyvsp[(-1) - (1)].expression); ((FunctionCallExpression*) (yyval.expression))->addArgument((yyvsp[0].expression)); }
-#line 1714 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1695 "SimpleC_gram.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1718 "SimpleC_gram.cpp" /* yacc.c:1646  */
+#line 1699 "SimpleC_gram.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
