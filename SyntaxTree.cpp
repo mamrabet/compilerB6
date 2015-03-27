@@ -133,6 +133,28 @@ FunctionCallExpression::print(std::ostream& out) const {
 }
 
 void
+PhiExpression::print(std::ostream& out) const {
+out << "phi(" ;
+if (m_fst.get()) {
+m_fst->print(out);
+if (m_fstFrom)
+out << ' ' << m_fstFrom->getRegistrationIndex();
+}
+else
+out << "no-expr";
+out << ", ";
+if (m_snd.get()) {
+m_snd->print(out);
+if (m_sndFrom)
+out << ' ' << m_sndFrom->getRegistrationIndex();
+}
+else
+out << "no-expr";
+out << ')';
+}
+
+
+void
 VirtualInstruction::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
    task.applyOn(*this, continuations);
    continuations.markInstructionWith(task.getInstruction(), task);
@@ -249,8 +271,14 @@ LabelInstruction::handle(VirtualTask& vtTask, WorkList& continuations, Reusabili
 else if (type == TTPhiInsertion) {
 assert(dynamic_cast<const PhiInsertionTask*>(&vtTask));
  ((PhiInsertionTask&) vtTask).m_dominationFrontier = &(this->m_dominationFrontier);
-};
+}
 
+else if (type == TTLabelPhiFrontier) {
+assert(dynamic_cast<const LabelPhiFrontierTask*>(&vtTask)
+&& dynamic_cast<const LabelPhiFrontierAgenda*>(&continuations));
+ ((LabelPhiFrontierAgenda*)&continuations)->propagateOn(*this,(*(LabelPhiFrontierTask*)&vtTask).m_modified); // appel à propagateOn
+return;
+ };
    VirtualInstruction::handle(vtTask, continuations, reuse);
 }
 
@@ -285,9 +313,9 @@ assert(dynamic_cast<const PhiInsertionTask*>(&virtualTask));
 PhiInsertionTask& task = (PhiInsertionTask&) virtualTask;
 LocalVariableExpression lastExpr(std::string(), 0, task.m_scope);
 
-task.m_scope.pop();
+task.m_scope.push();
 PhiInsertionTask::ModifiedVariables::iterator last = task.m_modified.upper_bound(&lastExpr);
- task.m_modified.erase(task.m_modified.begin(), task.m_modified.end());
+ task.m_modified.erase(last,task.m_modified.end());
 };
 
    VirtualInstruction::handle(virtualTask, continuations, reuse);
@@ -355,6 +383,37 @@ Function::setDominationFrontier() {
 
 
 void
+Function::insertPhiFunctions(const std::vector<LabelInstruction*>& labels) {
+for (std::vector<LabelInstruction*>::const_iterator iter = labels.begin(); iter != labels.end(); ++iter) {
+LabelInstruction& label = **iter;
+if (label.mark != NULL) {
+PhiInsertionTask::LabelResult* result = (PhiInsertionTask::LabelResult*) label.mark;
+VirtualInstruction* previous = &label;
+for (PhiInsertionTask::LabelResult::iterator labelIter = result->map().begin();
+labelIter != result->map().end(); ++labelIter) {
+if (labelIter->second.first || labelIter->second.second) {
+ExpressionInstruction* assign = new ExpressionInstruction();
+insertNewInstructionAfter(assign, *previous);
+previous = assign;
+AssignExpression* assignExpression = new AssignExpression();
+assign->setExpression(assignExpression);
+VirtualExpression* lvalue = labelIter->first->clone();
+assignExpression->setLValue(lvalue);
+PhiExpression* phi = new PhiExpression();
+assignExpression->setRValue(phi);
+if (labelIter->second.first)
+phi->addReference(labelIter->first->clone(), *labelIter->second.first);
+if (labelIter->second.second)
+phi->addReference(labelIter->first->clone(), *labelIter->second.second);
+};
+};
+delete result;
+label.mark = NULL;
+};
+};
+}
+
+void
 Program::printWithWorkList(std::ostream& out) const {
    for (std::set<Function>::const_iterator functionIter = m_functions.begin();
          functionIter != m_functions.end(); ++functionIter) {
@@ -389,6 +448,13 @@ for (std::set<Function>::const_iterator functionIter = m_functions.begin();
 functionIter != m_functions.end(); ++functionIter) {
 PhiInsertionAgenda phiInsertionAgenda(*functionIter);
 phiInsertionAgenda.execute();
+for (std::vector<LabelInstruction*>::const_iterator labelIter = phiInsertionAgenda.labels().begin();
+labelIter != phiInsertionAgenda.labels().end(); ++labelIter) {
+LabelPhiFrontierAgenda labelPhiFrontierAgenda;
+ labelPhiFrontierAgenda.propagate(*(*labelIter));// appel à propagate
+labelPhiFrontierAgenda.execute();
+};
+ const_cast<Function&>(*functionIter).insertPhiFunctions(phiInsertionAgenda.labels());
 };
 }
 

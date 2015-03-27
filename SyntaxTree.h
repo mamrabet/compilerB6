@@ -281,10 +281,7 @@ class WorkList {
 class VirtualExpression {
   public:
    enum Type
-      {  TUndefined, TConstant, TChar, TString, TLocalVariable, TParameter, TGlobalVariable,
-         TComparison, TUnaryOperator, TBinaryOperator, TDereference, TCast, TFunctionCall,
-         TAssign
-      };
+      {  TUndefined, TConstant, TChar, TString, TLocalVariable, TParameter, TGlobalVariable, TComparison, TUnaryOperator, TBinaryOperator, TDereference, TCast, TFunctionCall, TAssign, TPhi };
    typedef WorkList::Reusability Reusability;
 
   private:
@@ -295,7 +292,9 @@ class VirtualExpression {
 
   public:
    VirtualExpression() : m_type(TUndefined) {}
+VirtualExpression(const VirtualExpression& source) : m_type(source.m_type) {}
    virtual ~VirtualExpression() {}
+virtual VirtualExpression* clone() const { assert(false); return NULL; }
    Type type() const { return m_type; }
    virtual void print(std::ostream& out) const = 0;
    virtual std::auto_ptr<VirtualType> newType(Function* function) const = 0;
@@ -352,7 +351,11 @@ class LocalVariableExpression : public VirtualExpression {
       :  m_scope(scope), m_name(name), m_localIndex(localIndex) 
       {  setType(TLocalVariable); }
 
+LocalVariableExpression(const LocalVariableExpression& source)
+: VirtualExpression(source), m_scope(source.m_scope),
+m_name(source.m_name), m_localIndex(source.m_localIndex) {}
 virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
+virtual VirtualExpression* clone() const { return new LocalVariableExpression(*this); }
 
    virtual void print(std::ostream& out) const { out << "[local " << m_localIndex << ": " << m_name << ']'; }
    int getLocalScope() const { return m_localIndex; }
@@ -370,6 +373,9 @@ class ParameterExpression : public VirtualExpression {
   public:
    ParameterExpression(const std::string& name, int localIndex)
       :  m_name(name), m_localIndex(localIndex) { setType(TParameter); }
+ParameterExpression(const ParameterExpression& source)
+: VirtualExpression(source), m_name(source.m_name), m_localIndex(source.m_localIndex) {}
+virtual VirtualExpression* clone() const { return new ParameterExpression(*this); }
 
    int getIndex() const { return m_localIndex; }
    virtual void print(std::ostream& out) const { out << "[parameter " << m_localIndex << ": " << m_name << ']'; }
@@ -385,6 +391,10 @@ class GlobalVariableExpression : public VirtualExpression {
    GlobalVariableExpression(const std::string& name, int localIndex)
       :  m_name(name), m_localIndex(localIndex) { setType(TGlobalVariable); }
    
+GlobalVariableExpression(const GlobalVariableExpression& source)
+: VirtualExpression(source), m_name(source.m_name), m_localIndex(source.m_localIndex) {}
+virtual VirtualExpression* clone() const { return new GlobalVariableExpression(*this); }
+
    const int getIndex() const { return m_localIndex; }
    virtual void print(std::ostream& out) const { out << "[global " << m_localIndex << ": " << m_name << ']'; }
    virtual std::auto_ptr<VirtualType> newType(Function* function) const;
@@ -599,6 +609,10 @@ class AssignExpression : public VirtualExpression {
 
    AssignExpression& setLValue(VirtualExpression* lvalue) { m_lvalue.reset(lvalue); return *this; }
    AssignExpression& setRValue(VirtualExpression* rvalue) { m_rvalue.reset(rvalue); return *this; }
+
+const VirtualExpression& getLValue() const { return *m_lvalue; }
+const VirtualExpression& getRValue() const { return *m_rvalue; }
+
    virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
 
    virtual void print(std::ostream& out) const
@@ -619,6 +633,32 @@ class AssignExpression : public VirtualExpression {
 /*******************************/
 /* Définition des instructions */
 /*******************************/
+
+class GotoInstruction;
+class PhiExpression : public VirtualExpression {
+private:
+std::auto_ptr<VirtualExpression> m_fst;
+GotoInstruction* m_fstFrom;
+std::auto_ptr<VirtualExpression> m_snd;
+GotoInstruction* m_sndFrom;
+public:
+PhiExpression() : m_fstFrom(NULL), m_sndFrom(NULL) { setType(TPhi); }
+PhiExpression& addReference(VirtualExpression* expression, GotoInstruction& gotoInstruction)
+{ if (m_fst.get()) {
+assert(!m_snd.get());
+m_snd.reset(expression);
+m_sndFrom = &gotoInstruction;
+}
+else {
+m_fst.reset(expression);
+m_fstFrom = &gotoInstruction;
+};
+return *this;
+}
+virtual void print(std::ostream& out) const;
+virtual std::auto_ptr<VirtualType> newType(Function* function) const
+{ return m_fst.get() ? m_fst->newType(function) : m_snd->newType(function); }
+};
 
 class IfInstruction;
 class VirtualInstruction {
@@ -678,6 +718,15 @@ class VirtualInstruction {
    VirtualInstruction* getSPreviousInstruction() const { return m_previous; }
    void connectTo(VirtualInstruction& next)
       {  m_next = &next; next.m_previous = this; }
+VirtualInstruction* disconnectNext()
+{ VirtualInstruction* result = m_next;
+if (m_next) {
+assert(m_next->m_previous == this);
+m_next->m_previous = NULL;
+m_next = NULL;
+};
+return result;
+}
    virtual void print(std::ostream& out) const = 0;
    void clearMark() { mark = NULL; }
    bool isValid() const { return m_registrationIndex >= 0; }
@@ -701,6 +750,8 @@ class ExpressionInstruction : public VirtualInstruction {
 
   public:
    ExpressionInstruction() { setType(TExpression); }
+bool isPhi() const
+{ return ((m_expression.get())-> type() == VirtualExpression::TPhi ) && (m_expression.get()); }
 virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
 
    ExpressionInstruction& setExpression(VirtualExpression* expression) { m_expression.reset(expression); return *this; }
@@ -1000,6 +1051,17 @@ class Function {
          m_instructions.push_back(newInstruction);
          previous.connectTo(*newInstruction);
       }
+
+   void insertPhiFunctions(const std::vector<LabelInstruction*>& labels);
+
+void insertNewInstructionAfter(VirtualInstruction* newInstruction, VirtualInstruction& previous)
+{ newInstruction->setRegistrationIndex(m_instructions.size());
+m_instructions.push_back(newInstruction);
+VirtualInstruction* next = previous.getSNextInstruction();
+previous.connectTo(*newInstruction);
+if (next)
+newInstruction->connectTo(*next);
+}
    void setDominationFrontier();
    void addFirstInstruction(VirtualInstruction* newInstruction)
       {  assert(m_instructions.empty());
