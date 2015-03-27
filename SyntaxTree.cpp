@@ -5,7 +5,20 @@
 extern Program::ParseContext parseContext;
 extern FILE *yyin;
 
+#include <sstream>
+
 int yyparse ();
+
+int
+SymbolTable::addSSADeclaration(std::string& name, int localIndex, int& ident) {
+std::stringstream out;
+out << name << '_' << ident;
+++ident;
+m_localIndexes.insert(std::pair<std::string, int>(name = out.str(), m_types.size()));
+m_types.push_back(m_types[localIndex]);
+m_uniqueDefinitions.push_back(NULL);
+return m_types.size()-1;
+}
 
 Scope::FindResult
 Scope::find(const std::string& name, int& local, Scope& scope) const {
@@ -101,6 +114,91 @@ result.map().insert(insert);
 };
 };
 };
+}
+else if (type == TTRenaming) {
+assert(dynamic_cast<const RenamingTask*>(&vtTask) && dynamic_cast<const RenamingAgenda*>(&continuations));
+RenamingTask& task = (RenamingTask&) vtTask;
+if (task.m_isLValue) {
+if (!task.m_isOnlyPhi && m_scope.hasSSADefinition(m_localIndex)) {
+RenamingAgenda& remaingContinuations = (RenamingAgenda&) continuations;
+task.m_localReplace = new LocalVariableExpression(*this);
+m_localIndex = m_scope.addSSADeclaration(m_name, m_localIndex, remaingContinuations.m_ident);
+};
+task.m_localRename = this;
+}
+else { // !rtTask.m_isLValue
+RenamingTask::VariableRenaming locate(*this, task.m_function);
+std::set<RenamingTask::VariableRenaming>::iterator found = task.m_renamings.find(locate);
+if (found != task.m_renamings.end()) {
+  m_localIndex = found->getNewValue().getLocalScope();
+m_name = found->getNewValue().m_name;
+};
+};
+};
+}
+
+
+void
+ComparisonExpression::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if (type == TTRenaming) {
+if (m_fst.get())
+m_fst->handle(task, continuations, reuse);
+if (m_snd.get())
+m_snd->handle(task, continuations, reuse);
+};
+}
+void
+UnaryOperatorExpression::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if (type == TTRenaming) {
+if (m_subExpression.get())
+m_subExpression->handle(task, continuations, reuse);
+};
+}
+void
+BinaryOperatorExpression::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if (type == TTRenaming) {
+if (m_fst.get())
+m_fst->handle(task, continuations, reuse);
+if (m_snd.get())
+m_snd->handle(task, continuations, reuse);
+};
+}
+void
+DereferenceExpression::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if (type == TTRenaming) {
+if (m_subExpression.get())
+m_subExpression->handle(task, continuations, reuse);
+};
+}
+void
+ReferenceExpression::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if (type == TTRenaming) {
+if (m_subExpression.get())
+m_subExpression->handle(task, continuations, reuse);
+};
+}
+void
+CastExpression::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if (type == TTRenaming) {
+if (m_subExpression.get())
+m_subExpression->handle(task, continuations, reuse);
+};
+}
+void
+FunctionCallExpression::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if (type == TTRenaming) {
+for (std::vector<VirtualExpression*>::const_iterator iter = m_arguments.begin();
+iter != m_arguments.end(); ++iter) {
+if (*iter)
+(*iter)->handle(task, continuations, reuse);
+};
 };
 }
 
@@ -113,6 +211,14 @@ PhiInsertionTask& task = (PhiInsertionTask&) vtTask;
  task.m_isLValue = true;
 m_lvalue->handle(task, continuations, reuse);
  task.m_isLValue = false;
+}
+else if (type == TTRenaming) {
+assert(dynamic_cast<const RenamingTask*>(&vtTask));
+RenamingTask& task = (RenamingTask&) vtTask;
+task.m_isLValue = true;
+m_lvalue->handle(task, continuations, reuse);
+task.m_isLValue = false;
+m_rvalue->handle(task, continuations, reuse);
 };
 }
 
@@ -162,12 +268,111 @@ VirtualInstruction::handle(VirtualTask& task, WorkList& continuations, Reusabili
 }
 
 void
+PhiExpression::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
+int type = vtTask.getType();
+if (type == TTRenaming) {
+assert(dynamic_cast<const RenamingTask*>(&vtTask));
+RenamingTask& task = (RenamingTask&) vtTask;
+assert(m_fst.get());
+if (!m_snd.get())
+m_snd.reset(m_fst->clone());
+if (task.m_previousLabel == m_fstFrom)
+m_fst->handle(task, continuations, reuse);
+else if (!m_sndFrom) {
+m_sndFrom = task.m_previousLabel;
+std::set<RenamingTask::VariableRenaming>::const_iterator found = task.m_renamings
+.find(RenamingTask::VariableRenaming(*m_fst, task.m_function));
+LocalVariableExpression* newValue = NULL;
+if (found != task.m_renamings.end())
+newValue = found->getSDominatorNewValue();
+if (newValue)
+m_snd.reset(newValue->clone());
+}
+else {
+assert(task.m_previousLabel == m_sndFrom);
+m_snd->handle(vtTask, continuations, reuse);
+};
+};
+}
+
+void
 ExpressionInstruction::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
 int type = vtTask.getType();
 if (type == TTPhiInsertion) {
 if (m_expression.get())
 m_expression->handle(vtTask, continuations, reuse);
+}
+else if (type == TTRenaming) {
+if (m_expression.get())
+m_expression->handle(vtTask, continuations, reuse);
+assert(dynamic_cast<RenamingTask*>(&vtTask));
+RenamingTask& task = (RenamingTask&) vtTask;
+if (task.m_localRename) {
+if (task.m_localReplace) {
+std::set<RenamingTask::VariableRenaming>::iterator found = task.m_renamings
+.find(RenamingTask::VariableRenaming(*task.m_localReplace, task.m_function));
+if (found != task.m_renamings.end()) {
+const_cast<RenamingTask::VariableRenaming&>(*found)
+.setNewValue(new LocalVariableExpression(*task.m_localRename),
+task.m_previousLabel ? task.m_previousLabel : (task.m_lastBranch
+? task.m_lastBranch->getSPreviousInstruction() : NULL));
+delete task.m_localReplace;
+task.m_localReplace = NULL;
+}
+else {
+assert(!task.m_lastBranch ||
+dynamic_cast<IfInstruction*>(task.m_lastBranch->getSPreviousInstruction()));
+task.m_renamings.insert(RenamingTask::VariableRenaming(
+task.m_localReplace, new LocalVariableExpression(*task.m_localRename),
+task.m_function, task.m_previousLabel
+? task.m_previousLabel : (task.m_lastBranch
+? task.m_lastBranch->getSPreviousInstruction()
+: NULL)));
+task.m_localReplace = NULL;
 };
+};
+task.m_localRename->scope().setSSADefinition(task.m_localRename->getLocalScope(), *this);
+task.m_localRename = NULL;
+};
+if (task.m_previousLabel) {
+bool isLast = true;
+if (getSNextInstruction() && getSNextInstruction()->type() == TExpression) {
+assert(dynamic_cast<const ExpressionInstruction*>(getSNextInstruction()));
+if (((const ExpressionInstruction&) *getSNextInstruction()).isPhi()) {
+isLast = false;
+if (task.m_isOnlyPhi)
+VirtualInstruction::handle(task, continuations, reuse);
+};
+};
+if (isLast) {
+assert(dynamic_cast<const LabelInstruction*>(task.m_previousLabel->getSNextInstruction()));
+VirtualInstruction* dominator = ((LabelInstruction*)
+task.m_previousLabel->getSNextInstruction())->getSDominator();
+assert(dominator);
+std::set<RenamingTask::VariableRenaming>::iterator iter = task.m_renamings.begin();
+while (iter != task.m_renamings.end()) {
+if (!const_cast<RenamingTask::VariableRenaming&>(*iter)
+.setDominator(*dominator, task.m_previousLabel)) {
+std::set<RenamingTask::VariableRenaming>::iterator nextIter(iter);
+++nextIter;
+const RenamingTask::VariableRenaming* next = (nextIter != task.m_renamings.end())
+? &(*nextIter) : NULL;
+task.m_renamings.erase(iter);
+if (next)
+iter = task.m_renamings.find(*next);
+else
+iter = task.m_renamings.end();
+}
+else
+++iter;
+};
+task.m_previousLabel = NULL;
+};
+if (task.m_isOnlyPhi)
+return;
+};
+};
+
 VirtualInstruction::handle(vtTask, continuations, reuse);
 }
 
@@ -186,6 +391,24 @@ LabelInstruction& label = (LabelInstruction&) *(*labelIter)->getSNextInstruction
 if (!label.mark)
 label.mark = new PhiInsertionTask::LabelResult();
  ((PhiInsertionTask::LabelResult*) label.mark)->variablesToAdd().insert(task.m_modified.begin(),task.m_modified.end());
+};
+};
+}
+else if (type == TTRenaming) {
+assert(dynamic_cast<const RenamingTask*>(&vtTask));
+RenamingTask& task = (RenamingTask&) vtTask;
+if ((m_context == CAfterIfThen) || (m_context == CAfterIfElse))
+task.m_lastBranch = this;
+else if (m_context >= CLoop) {
+task.m_previousLabel = this;
+if (getSNextInstruction()->mark) {
+task.m_isOnlyPhi = true;
+if (getSNextInstruction()) {
+task.clearInstruction();
+task.setInstruction(*getSNextInstruction());
+reuse.setReuse();
+};
+return;
 };
 };
 };
@@ -278,10 +501,85 @@ assert(dynamic_cast<const LabelPhiFrontierTask*>(&vtTask)
 && dynamic_cast<const LabelPhiFrontierAgenda*>(&continuations));
  ((LabelPhiFrontierAgenda*)&continuations)->propagateOn(*this,(*(LabelPhiFrontierTask*)&vtTask).m_modified); // appel à propagateOn
 return;
- };
+ }
+else if (type == TTRenaming) {
+assert(dynamic_cast<const RenamingTask*>(&vtTask));
+RenamingTask& task = (RenamingTask&) vtTask;
+if (task.m_previousLabel) {
+bool isLast = true;
+if (getSNextInstruction() && getSNextInstruction()->type() == TExpression) {
+assert(dynamic_cast<const ExpressionInstruction*>(getSNextInstruction()));
+if (((const ExpressionInstruction&) *getSNextInstruction()).isPhi()) {
+isLast = false;
+if (task.m_isOnlyPhi)
+VirtualInstruction::handle(vtTask, continuations, reuse);
+};
+}
+if (isLast) {
+assert(m_dominator);
+std::set<RenamingTask::VariableRenaming>::iterator iter = task.m_renamings.begin();
+while (iter != task.m_renamings.end()) {
+if (!const_cast<RenamingTask::VariableRenaming&>(*iter).setDominator(*m_dominator)) {
+std::set<RenamingTask::VariableRenaming>::iterator nextIter(iter);
+++nextIter;
+const RenamingTask::VariableRenaming* next = (nextIter != task.m_renamings.end())
+? &(*nextIter) : NULL;
+task.m_renamings.erase(iter);
+if (next)
+iter = task.m_renamings.find(*next);
+ else
+iter = task.m_renamings.end();
+}
+else
+++iter;
+};
+task.m_previousLabel = NULL;
+};
+if (task.m_isOnlyPhi)
+return;
+};
+};
+
+
    VirtualInstruction::handle(vtTask, continuations, reuse);
 }
 
+
+void
+ReturnInstruction::handle(VirtualTask& task, WorkList& continuations, Reusability& reuse) {
+int type = task.getType();
+if ((type == TTRenaming) && m_result.get())
+m_result->handle(task, continuations, reuse);
+VirtualInstruction::handle(task, continuations, reuse);
+}
+
+void
+IfInstruction::handle(VirtualTask& vtTask, WorkList& continuations, Reusability& reuse) {
+int type = vtTask.getType();
+if (type == TTRenaming) {
+if (m_expression.get())
+m_expression->handle(vtTask, continuations, reuse);
+assert(dynamic_cast<const RenamingTask*>(&vtTask));
+RenamingTask& task = (RenamingTask&) vtTask;
+std::set<RenamingTask::VariableRenaming>::iterator iter = task.m_renamings.begin();
+while (iter != task.m_renamings.end()) {
+if (!const_cast<RenamingTask::VariableRenaming&>(*iter).setDominator(*this)) {
+std::set<RenamingTask::VariableRenaming>::iterator nextIter(iter);
+++nextIter;
+const RenamingTask::VariableRenaming* next = (nextIter != task.m_renamings.end())
+? &(*nextIter) : NULL;
+task.m_renamings.erase(iter);
+if (next)
+iter = task.m_renamings.find(*next);
+else
+iter = task.m_renamings.end();
+}
+else
+++iter;
+};
+};
+VirtualInstruction::handle(vtTask, continuations, reuse);
+}
 
 void
 EnterBlockInstruction::handle(VirtualTask& virtualTask, WorkList& continuations, Reusability& reuse) {
@@ -295,7 +593,8 @@ int type = virtualTask.getType();
    }  else if (type == TTPhiInsertion) {
 assert(dynamic_cast<const PhiInsertionTask*>(&virtualTask));
 ((PhiInsertionTask&) virtualTask).m_scope =  (this->m_scope);
-};
+}else if (type == TTRenaming)
+m_scope.setSizeDefinitions();
 
 }
 
@@ -458,6 +757,14 @@ labelPhiFrontierAgenda.execute();
 };
 }
 
+void
+Program::renameSSA() {
+for (std::set<Function>::const_iterator functionIter = m_functions.begin();
+functionIter != m_functions.end(); ++functionIter) {
+RenamingAgenda renamingAgenda(*functionIter);
+renamingAgenda.execute();
+};
+}
 
 extern int yydebug;
 
@@ -485,7 +792,9 @@ std::cout << std::endl;
 program.insertPhiFunctions();
 program.printWithWorkList(std::cout);
 std::cout << std::endl;
-
+program.renameSSA();
+program.printWithWorkList(std::cout);
+std::cout << std::endl;
 
    return 0;
 }

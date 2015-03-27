@@ -91,10 +91,12 @@ class VirtualType {
 
 class Scope;
 class Function;
+class VirtualInstruction;
 class SymbolTable {
   private:
    std::map<std::string, int> m_localIndexes;
    std::vector<VirtualType*> m_types;
+std::vector<VirtualInstruction*> m_uniqueDefinitions;
    std::shared_ptr<SymbolTable> m_parent;
    
   public:
@@ -113,6 +115,20 @@ class SymbolTable {
    bool contain(const std::string& name) const { return m_localIndexes.find(name) != m_localIndexes.end(); }
    int localIndex(const std::string& name) const { return m_localIndexes.find(name)->second; }
    const VirtualType& getType(int uIndex) const { return *m_types[uIndex]; }
+
+void setSizeDefinitions()
+{ m_uniqueDefinitions.reserve(m_types.size());
+for (std::vector<VirtualType*>::const_iterator iter = m_types.begin();
+iter != m_types.end(); ++iter)
+m_uniqueDefinitions.push_back(NULL);
+}
+int addSSADeclaration(std::string& name, int localIndex, int& ident);
+bool hasSSADefinition(int localIndex) const
+{ return m_uniqueDefinitions[localIndex] != NULL; }
+void setSSADefinition(int localIndex, VirtualInstruction& instruction)
+{ m_uniqueDefinitions[localIndex] = &instruction; }
+
+
    friend class Scope;
    void printAsDeclarations(std::ostream& out) const
       {  for (std::map<std::string, int>::const_iterator iIter = m_localIndexes.begin();
@@ -143,7 +159,16 @@ class Scope {
    
    void addDeclaration(const std::string& name, VirtualType* type)
       {  m_last->addDeclaration(name, type); }
-   FindResult find(const std::string& name, int& local, Scope& scope) const;
+
+ void setSizeDefinitions() { m_last->setSizeDefinitions(); }
+int addSSADeclaration(std::string& name, int localIndex, int& ident)
+{ return m_last->addSSADeclaration(name, localIndex, ident); }
+bool hasSSADefinition(int localIndex) const
+{ return m_last->hasSSADefinition(localIndex); }
+void setSSADefinition(int localIndex, VirtualInstruction& instruction)
+{ m_last->setSSADefinition(localIndex, instruction); } 
+
+ FindResult find(const std::string& name, int& local, Scope& scope) const;
    int getFunctionIndex(int local) const;
    void printAsDeclarations(std::ostream& out) const
       {  m_last->printAsDeclarations(out); }
@@ -361,6 +386,7 @@ virtual VirtualExpression* clone() const { return new LocalVariableExpression(*t
    int getLocalScope() const { return m_localIndex; }
    int getFunctionIndex(Function& function) const;
    int getGlobalIndex() const { return m_scope.getFunctionIndex(m_localIndex); }
+Scope& scope() { return m_scope; }
    virtual std::auto_ptr<VirtualType> newType(Function* function) const
       {  return std::auto_ptr<VirtualType>(m_scope.getType(m_localIndex).clone()); }
 };
@@ -415,7 +441,9 @@ class ComparisonExpression : public VirtualExpression {
       {  assert(m_operator == OUndefined); m_operator = operatorSource; return *this; }
    ComparisonExpression& setFst(VirtualExpression* fst) { m_fst.reset(fst); return *this; }
    ComparisonExpression& setSnd(VirtualExpression* snd) { m_snd.reset(snd); return *this; }
-   
+
+   virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
+
    virtual void print(std::ostream& out) const
       {  out << '(';
          if (m_fst.get())
@@ -456,6 +484,7 @@ class UnaryOperatorExpression : public VirtualExpression {
       {  assert(m_operator == OUndefined); m_operator = operatorSource; return *this; }
    UnaryOperatorExpression& setSubExpression(VirtualExpression* subExpression)
       {  m_subExpression.reset(subExpression); return *this; }
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
 
    virtual void print(std::ostream& out) const
       {  if (m_operator == OUndefined)
@@ -486,6 +515,7 @@ class BinaryOperatorExpression : public VirtualExpression {
    BinaryOperatorExpression& setFst(VirtualExpression* fst) { m_fst.reset(fst); return *this; }
    BinaryOperatorExpression& setSnd(VirtualExpression* snd) { m_snd.reset(snd); return *this; }
    
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
    virtual void print(std::ostream& out) const
       {  out << '(';
          if (m_fst.get())
@@ -530,6 +560,8 @@ class DereferenceExpression : public VirtualExpression {
          assert(dynamic_cast<const PointerType*>(result.get()));
          return std::auto_ptr<VirtualType>(((PointerType&) *result).getSubType());
       }
+
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
 };
 
 class ReferenceExpression : public VirtualExpression {
@@ -552,6 +584,8 @@ class ReferenceExpression : public VirtualExpression {
       {  std::auto_ptr<VirtualType> result = m_subExpression->newType(function);
          return std::auto_ptr<VirtualType>(new PointerType(result.release()));
       }
+
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
 };
 
 class CastExpression : public VirtualExpression {
@@ -565,6 +599,8 @@ class CastExpression : public VirtualExpression {
    CastExpression& setSubExpression(VirtualExpression* subExpression)
       {  m_subExpression.reset(subExpression); return *this; }
    CastExpression& setType(VirtualType* type) { m_type.reset(type); return *this; }
+
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
    virtual void print(std::ostream& out) const
       {  out << '(';
          if (m_type.get())
@@ -595,7 +631,9 @@ class FunctionCallExpression : public VirtualExpression {
       }
    FunctionCallExpression& addArgument(VirtualExpression* argument)
       {  m_arguments.push_back(argument); return *this; }
-   virtual void print(std::ostream& out) const;
+  
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
+ virtual void print(std::ostream& out) const;
    virtual std::auto_ptr<VirtualType> newType(Function* callerFunction) const;
 };
 
@@ -655,6 +693,8 @@ m_fstFrom = &gotoInstruction;
 };
 return *this;
 }
+
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
 virtual void print(std::ostream& out) const;
 virtual std::auto_ptr<VirtualType> newType(Function* function) const
 { return m_fst.get() ? m_fst->newType(function) : m_snd->newType(function); }
@@ -769,7 +809,7 @@ class IfInstruction : public VirtualInstruction {
 
   public:
    IfInstruction() { setType(TIf); }
-
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
    virtual int countNexts() const { return VirtualInstruction::countNexts() + (m_then ? 1 : 0); }
    IfInstruction& setExpression(VirtualExpression* expression) { m_expression.reset(expression); return *this; }
    void connectToThen(GotoInstruction& gotoPoint);
@@ -918,7 +958,7 @@ class ReturnInstruction : public VirtualInstruction {
 
   public:
    ReturnInstruction() { setType(TReturn); }
-
+virtual void handle(VirtualTask& task, WorkList& continuations, Reusability& reuse);
    ReturnInstruction& setResult(VirtualExpression* expression) { m_result.reset(expression); return *this; }
    virtual void print(std::ostream& out) const
       {  out << "return ";
@@ -1135,7 +1175,7 @@ class Program {
    void computeDominators();
    void computeDominationFrontiers();
 void insertPhiFunctions();
-
+void renameSSA();
    class ParseContext {
      private:
       friend int getTokenIdentifier(const char* szText);
